@@ -1,4 +1,4 @@
-name: Run Scheduled Tests Every Monday
+name: Run Scheduled Tests Hourly
 
 on:
   schedule:
