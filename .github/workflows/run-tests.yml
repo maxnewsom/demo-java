@@ -17,4 +17,4 @@ jobs:
           echo "SAUCE_ACCESS_KEY=${{ secrets.SAUCE_ACCESS_KEY }}" >> $GITHUB_ENV
       - name: Run tests using the script
         run: |
-          mvn clean test -pl appium -Dtest=AndroidNativeAppTest -Dregion=us ; mvn clean test -pl appium -Dtest=IOSNativeAppTest -Dregion=us
+          mvn clean test -pl appium/appium-app/appium-app-examples -Dtest=AndroidNativeAppTest -Dregion=us ; mvn clean install -pl appium/appium-app/appium-app-examples -Dtest=IOSNativeAppTest -Dregion=us
