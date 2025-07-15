@@ -40,7 +40,7 @@ public class TestConfigurations {
     Map<String, Object> caps = new HashMap<>();
     caps.put("platformName", "Android");
     caps.put("appium:automationName", "UiAutomator2");
-    caps.put("appium:app", "storage:filename=CashProAppTest.apk");
+    caps.put("appium:app", "storage:filename=<app-name>");
     caps.put("appium:deviceName", "Samsung.*");
     caps.put("appium:platformVersion", "15");
     caps.put("appium:autoGrantPermissions", true);
