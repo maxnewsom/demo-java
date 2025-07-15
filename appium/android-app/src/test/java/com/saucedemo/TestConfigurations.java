@@ -35,7 +35,7 @@ public class TestConfigurations {
   //   caps.put("appium:app", ANDROID_APP_URL);
   //   caps.put("appium:deviceName", "Google.*");
 
-//bofa config
+//naga config
   private static Capabilities androidAppRDC(TestInfo testInfo) {
     Map<String, Object> caps = new HashMap<>();
     caps.put("platformName", "Android");

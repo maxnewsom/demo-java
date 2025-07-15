@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.NoSuchElementException;
 import java.util.List;
 
-public class BofAAuthenticationTest extends TestBase {
+public class NagaAuthenticationTest extends TestBase {
 
 
 @Test
