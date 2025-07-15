@@ -24,13 +24,26 @@ public class TestConfigurations {
   }
 
   // Generate these capabilities with Platform Configurator:
+
   // https://app.saucelabs.com/platform-configurator
+
+  //demo app config
+  // private static Capabilities androidAppRDC(TestInfo testInfo) {
+  //   Map<String, Object> caps = new HashMap<>();
+  //   caps.put("platformName", "Android");
+  //   caps.put("appium:automationName", "UiAutomator2");
+  //   caps.put("appium:app", ANDROID_APP_URL);
+  //   caps.put("appium:deviceName", "Google.*");
+
+//bofa config
   private static Capabilities androidAppRDC(TestInfo testInfo) {
     Map<String, Object> caps = new HashMap<>();
     caps.put("platformName", "Android");
     caps.put("appium:automationName", "UiAutomator2");
-    caps.put("appium:app", ANDROID_APP_URL);
-    caps.put("appium:deviceName", "Google.*");
+    caps.put("appium:app", "storage:filename=CashProAppTest.apk");
+    caps.put("appium:deviceName", "Samsung.*");
+    caps.put("appium:platformVersion", "15");
+    caps.put("appium:autoGrantPermissions", true);
 
     Map<String, Object> sauceOptions = new HashMap<>();
     sauceOptions.put("username", System.getenv("SAUCE_USERNAME"));
@@ -38,6 +51,7 @@ public class TestConfigurations {
     sauceOptions.put("appiumVersion", "latest");
     sauceOptions.put("name", testInfo.getDisplayName());
     sauceOptions.put("build", "Android App RDC: " + BUILD_TIME);
+    sauceOptions.put("resigningEnabled", false);
     caps.put("sauce:options", sauceOptions);
 
     return new MutableCapabilities(caps);

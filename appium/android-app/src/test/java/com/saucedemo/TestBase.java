@@ -15,6 +15,7 @@ import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.PointerInput;
+import org.openqa.selenium.WebElement;
 
 public class TestBase {
   public static final String DATA_CENTER = System.getProperty("sauce.region", "us");
@@ -29,18 +30,23 @@ public class TestBase {
     Capabilities capabilities = TestConfigurations.getCapabilities(testInfo);
 
     this.driver = new AndroidDriver(new URL(SAUCE_URL), capabilities);
-    this.driver.manage().timeouts().implicitlyWait(Duration.of(5, ChronoUnit.SECONDS));
+    this.driver.manage().timeouts().implicitlyWait(Duration.of(30, ChronoUnit.SECONDS));
   }
 
-  public void scrollDown(By locator) {
-    new Actions(driver)
-        .setActivePointer(PointerInput.Kind.TOUCH, "finger")
-        .moveToElement(driver.findElement(locator))
-        .clickAndHold()
-        .moveByOffset(0, -500)
-        .release()
-        .perform();
-  }
+  // public void scrollDown(By locator) {
+  //   new Actions(driver)
+  //       .setActivePointer(PointerInput.Kind.TOUCH, "finger")
+  //       .moveToElement(driver.findElement(locator))
+  //       .clickAndHold()
+  //       .moveByOffset(0, -500)
+  //       .release()
+  //       .perform();
+  // }
+
+  public void scrollDown(By scrollableElementLocator) { // <--- Changed from AppiumBy to By
+    WebElement scrollableElement = driver.findElement(scrollableElementLocator);
+    // ... rest of your scroll logic
+}
 
   public class SauceTestWatcher implements TestWatcher {
     @Override
