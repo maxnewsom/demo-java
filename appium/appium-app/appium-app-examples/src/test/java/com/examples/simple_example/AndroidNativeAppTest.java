@@ -80,7 +80,7 @@ public class AndroidNativeAppTest {
             sauceOptions.setCapability("appiumVersion", "latest");
         }
         capabilities.setCapability("appium:platformVersion", "12");
-        String appName = "mda-2.1.0-24.apk";
+        String appName = "SauceLabs-Demo-App.apk";
         capabilities.setCapability("appium:app", "storage:filename=" +appName);
 
         // Sauce capabilities
