@@ -1,0 +1,28 @@
+name: Run Scheduled Tests Hourly
+
+on:
+  schedule:
+    - cron: "15 */6 * * *" # Runs every 6 hours
+  workflow_dispatch:      # Allows you to click "Run Workflow" manually
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Removed matrix since you only have one OS
+    env:
+      SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+      SAUCE_ACCESS_KEY: ${{ secrets.SAUCE_ACCESS_KEY }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: RDC Native App Android
+        run: mvn test -pl appium/appium-app/appium-app-examples -Dtest=AndroidNativeAppTest -Dregion=us
+
+      - name: RDC Native App IOS
+        run: mvn test -pl appium/appium-app/appium-app-examples -Dtest=IOSNativeAppTest -Dregion=us
