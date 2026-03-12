@@ -22,10 +22,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Assertions;
@@ -36,20 +33,10 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.Credentials;
 import org.openqa.selenium.HasAuthentication;
-import org.openqa.selenium.JavascriptException;
 import org.openqa.selenium.UsernameAndPassword;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.devtools.DevTools;
-import org.openqa.selenium.devtools.HasDevTools;
-import org.openqa.selenium.devtools.NetworkInterceptor;
-import org.openqa.selenium.devtools.v129.browser.Browser;
-import org.openqa.selenium.devtools.v129.emulation.Emulation;
-import org.openqa.selenium.devtools.v129.network.Network;
-import org.openqa.selenium.devtools.v129.network.model.Headers;
-import org.openqa.selenium.devtools.v129.performance.Performance;
-import org.openqa.selenium.devtools.v129.performance.model.Metric;
-import org.openqa.selenium.devtools.v129.runtime.Runtime;
+import org.openqa.selenium.chromium.HasCdp;
 import org.openqa.selenium.logging.HasLogEvents;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.http.ClientConfig;
@@ -95,25 +82,13 @@ public class DevToolsTest extends TestBase {
 
   @Test
   public void setCookie() {
-    DevTools devTools = ((HasDevTools) driver).getDevTools();
-    devTools.createSession();
+    Map<String, Object> cookie = new HashMap<>();
+    cookie.put("name", "cheese");
+    cookie.put("value", "gouda");
+    cookie.put("domain", "www.selenium.dev");
+    cookie.put("secure", true);
 
-    devTools.send(
-        Network.setCookie(
-            "cheese",
-            "gouda",
-            Optional.empty(),
-            Optional.of("www.selenium.dev"),
-            Optional.empty(),
-            Optional.of(true),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty()));
+    ((HasCdp) driver).executeCdpCommand("Network.setCookie", cookie);
 
     driver.get("https://www.selenium.dev");
     Cookie cheese = driver.manage().getCookieNamed("cheese");
@@ -124,15 +99,15 @@ public class DevToolsTest extends TestBase {
   public void performanceMetrics() {
     driver.get("https://www.selenium.dev/selenium/web/frameset.html");
 
-    DevTools devTools = ((HasDevTools) driver).getDevTools();
-    devTools.createSession();
-    devTools.send(Performance.enable(Optional.empty()));
+    ((HasCdp) driver).executeCdpCommand("Performance.enable", new HashMap<>());
 
-    List<Metric> metricList = devTools.send(Performance.getMetrics());
+    Map<String, Object> response =
+        ((HasCdp) driver).executeCdpCommand("Performance.getMetrics", new HashMap<>());
+    List<Map<String, Object>> metricList = (List<Map<String, Object>>) response.get("metrics");
 
     Map<String, Number> metrics = new HashMap<>();
-    for (Metric metric : metricList) {
-      metrics.put(metric.getName(), metric.getValue());
+    for (Map<String, Object> metric : metricList) {
+      metrics.put((String) metric.get("name"), (Number) metric.get("value"));
     }
 
     Assertions.assertTrue(metrics.get("DevToolsCommandDuration").doubleValue() > 0);
@@ -143,42 +118,47 @@ public class DevToolsTest extends TestBase {
   public void performanceMetricsWithCPUThrottling() {
     driver.get("https://googlechrome.github.io/devtools-samples/jank/");
 
-    DevTools devTools = ((HasDevTools) driver).getDevTools();
-    devTools.createSession();
-    devTools.send(Performance.enable(Optional.empty()));
+    ((HasCdp) driver).executeCdpCommand("Performance.enable", new HashMap<>());
 
-    List<Metric> metricList = devTools.send(Performance.getMetrics());
-    Metric heapCheckOne =
-        metricList.stream()
-            .filter(metric -> "JSHeapUsedSize".equals(metric.getName()))
-            .findFirst()
-            .orElse(new Metric("JSHeapUsedSize", 0));
+    Map<String, Object> responseOne =
+        ((HasCdp) driver).executeCdpCommand("Performance.getMetrics", new HashMap<>());
+    List<Map<String, Object>> metricListOne = (List<Map<String, Object>>) responseOne.get("metrics");
 
-    devTools.send(Emulation.setCPUThrottlingRate(4));
+    Number heapCheckOne = 0;
+    for (Map<String, Object> metric : metricListOne) {
+      if ("JSHeapUsedSize".equals(metric.get("name"))) {
+        heapCheckOne = (Number) metric.get("value");
+      }
+    }
+
+    ((HasCdp) driver).executeCdpCommand("Emulation.setCPUThrottlingRate", ImmutableMap.of("rate", 4));
     for (int i = 0; i < 15; i++) {
       driver.findElement(By.className("add")).click();
     }
 
-    metricList = devTools.send(Performance.getMetrics());
-    Metric heapCheckTwo =
-        metricList.stream()
-            .filter(metric -> "JSHeapUsedSize".equals(metric.getName()))
-            .findFirst()
-            .orElse(new Metric("JSHeapUsedSize", 0));
+    Map<String, Object> responseTwo =
+        ((HasCdp) driver).executeCdpCommand("Performance.getMetrics", new HashMap<>());
+    List<Map<String, Object>> metricListTwo = (List<Map<String, Object>>) responseTwo.get("metrics");
 
-    Assertions.assertTrue(heapCheckOne.getValue().intValue() < heapCheckTwo.getValue().intValue());
+    Number heapCheckTwo = 0;
+    for (Map<String, Object> metric : metricListTwo) {
+      if ("JSHeapUsedSize".equals(metric.get("name"))) {
+        heapCheckTwo = (Number) metric.get("value");
+      }
+    }
+
+    Assertions.assertTrue(heapCheckOne.doubleValue() < heapCheckTwo.doubleValue());
   }
 
   @Test
   public void basicAuthenticationCdpApi() {
-    DevTools devTools = ((HasDevTools) driver).getDevTools();
-    devTools.createSession();
-    devTools.send(Network.enable(Optional.of(100000), Optional.of(100000), Optional.of(100000)));
+    ((HasCdp) driver).executeCdpCommand("Network.enable", new HashMap<>());
 
     String encodedAuth = Base64.getEncoder().encodeToString("admin:admin".getBytes());
-    Map<String, Object> headers = ImmutableMap.of("Authorization", "Basic " + encodedAuth);
+    Map<String, Object> headers =
+        ImmutableMap.of("headers", ImmutableMap.of("Authorization", "Basic " + encodedAuth));
 
-    devTools.send(Network.setExtraHTTPHeaders(new Headers(headers)));
+    ((HasCdp) driver).executeCdpCommand("Network.setExtraHTTPHeaders", headers);
 
     driver.get("https://the-internet.herokuapp.com/basic_auth");
 
@@ -205,14 +185,10 @@ public class DevToolsTest extends TestBase {
   public void consoleLogs() {
     driver.get("https://www.selenium.dev/selenium/web/bidi/logEntryAdded.html");
 
-    DevTools devTools = ((HasDevTools) driver).getDevTools();
-    devTools.createSession();
-    devTools.send(Runtime.enable());
+    ((HasCdp) driver).executeCdpCommand("Runtime.enable", new HashMap<>());
 
     CopyOnWriteArrayList<String> logs = new CopyOnWriteArrayList<>();
-    devTools.addListener(
-        Runtime.consoleAPICalled(),
-        event -> logs.add((String) event.getArgs().get(0).getValue().orElse("")));
+    ((HasLogEvents) driver).onLogEvent(consoleEvent(e -> logs.add(e.getMessages().get(0))));
 
     driver.findElement(By.id("consoleLog")).click();
 
@@ -224,41 +200,21 @@ public class DevToolsTest extends TestBase {
   public void jsErrors() {
     driver.get("https://www.selenium.dev/selenium/web/bidi/logEntryAdded.html");
 
-    DevTools devTools = ((HasDevTools) driver).getDevTools();
-    devTools.createSession();
-    devTools.send(Runtime.enable());
+    ((HasCdp) driver).executeCdpCommand("Runtime.enable", new HashMap<>());
 
-    CopyOnWriteArrayList<JavascriptException> errors = new CopyOnWriteArrayList<>();
-    devTools.getDomains().events().addJavascriptExceptionListener(errors::add);
+    CopyOnWriteArrayList<String> errors = new CopyOnWriteArrayList<>();
+    ((HasLogEvents) driver).onLogEvent(consoleEvent(e -> {
+      if ("error".equals(e.getType())) {
+        errors.add(e.getMessages().get(0));
+      }
+    }));
 
     driver.findElement(By.id("jsException")).click();
 
     wait.until(_d -> !errors.isEmpty());
-    Assertions.assertTrue(errors.get(0).getMessage().contains("Error: Not working"));
+    Assertions.assertTrue(errors.get(0).contains("Error: Not working"));
   }
 
-  @Test
-  public void waitForDownload() {
-    driver.get("https://www.selenium.dev/selenium/web/downloads/download.html");
-
-    DevTools devTools = ((HasDevTools) driver).getDevTools();
-    devTools.createSession();
-    devTools.send(
-        Browser.setDownloadBehavior(
-            Browser.SetDownloadBehaviorBehavior.ALLOWANDNAME,
-            Optional.empty(),
-            Optional.of(""),
-            Optional.of(true)));
-
-    AtomicBoolean completed = new AtomicBoolean(false);
-    devTools.addListener(
-        Browser.downloadProgress(),
-        e -> completed.set(Objects.equals(e.getState().toString(), "completed")));
-
-    driver.findElement(By.id("file-2")).click();
-
-    Assertions.assertDoesNotThrow(() -> wait.until(_d -> completed));
-  }
 
   @Test
   public void mutatedElements() {

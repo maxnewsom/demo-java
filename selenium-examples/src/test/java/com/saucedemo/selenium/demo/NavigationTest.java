@@ -3,12 +3,19 @@ package com.saucedemo.selenium.demo;
 import com.saucedemo.selenium.TestBase;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
 
 public class NavigationTest extends TestBase {
+
+  private WebDriverWait wait;
 
   @BeforeEach
   public void setup(TestInfo testInfo) {
     startFirefoxSession(testInfo);
+    wait = new WebDriverWait(driver, Duration.ofSeconds(10));
   }
 
   @Test
@@ -31,6 +38,9 @@ public class NavigationTest extends TestBase {
     driver.findElement(By.cssSelector("input[data-test='password']")).sendKeys("secret_sauce");
     driver.findElement(By.cssSelector("input[data-test='login-button']")).click();
     driver.findElement(By.cssSelector("button[data-test='add-to-cart-sauce-labs-onesie']")).click();
+
+    wait.until(ExpectedConditions.textToBePresentInElementLocated(By.className("shopping_cart_badge"), "1"));
+
     driver.findElement(By.className("shopping_cart_link")).click();
     driver.findElement(By.cssSelector("button[data-test='checkout']")).click();
 
@@ -46,6 +56,9 @@ public class NavigationTest extends TestBase {
     driver.findElement(By.cssSelector("input[data-test='password']")).sendKeys("secret_sauce");
     driver.findElement(By.cssSelector("input[data-test='login-button']")).click();
     driver.findElement(By.cssSelector("button[data-test='add-to-cart-sauce-labs-onesie']")).click();
+
+    wait.until(ExpectedConditions.textToBePresentInElementLocated(By.className("shopping_cart_badge"), "1"));
+
     driver.findElement(By.className("shopping_cart_link")).click();
     driver.findElement(By.cssSelector("button[data-test='checkout']")).click();
     driver.findElement(By.cssSelector("input[data-test='firstName']")).sendKeys("Luke");
@@ -65,6 +78,9 @@ public class NavigationTest extends TestBase {
     driver.findElement(By.cssSelector("input[data-test='password']")).sendKeys("secret_sauce");
     driver.findElement(By.cssSelector("input[data-test='login-button']")).click();
     driver.findElement(By.cssSelector("button[data-test='add-to-cart-sauce-labs-onesie']")).click();
+
+    wait.until(ExpectedConditions.textToBePresentInElementLocated(By.className("shopping_cart_badge"), "1"));
+
     driver.findElement(By.className("shopping_cart_link")).click();
 
     driver.findElement(By.cssSelector("button[data-test='checkout']")).click();
